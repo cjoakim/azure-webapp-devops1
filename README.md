@@ -3,6 +3,8 @@
 A containerized Node.js web app, built with **Azure DevOps**, deployed to a Azure Linux App Service. 
 Also deployed to an Azure Container Instance.
 
+This project is a "200-Level" example of Docker, Azure DevOps, Node.js web apps, and Azure deployments.
+
 # Links
 
 See https://docs.microsoft.com/en-us/azure/container-instances/container-instances-using-azure-container-registry
@@ -52,10 +54,38 @@ DOCKERHUB_USER_NAME=your-dockerhub-user-id
 DOCKERHUB_USER_PASS=your-dockerhub-user-password
 ```
 
+# The DevOps Pipeline
+
+File **azure-pipelines.yml** defines the Pipeline in AzureDevops;
+you include this file with your application code in your git code repository.
+
+This particular Pipeline, which runs on an Ubuntu VM, consists of three explicit
+steps and one implicit step.  The first step is implicit - Azure DevOps executes
+a 'git pull' of your repo to the build VM.
+
+The explicit steps in this pipeline are:
+- displays some pipeline variables for debugging/verification purposes
+- executes the explore_build_env.sh bash script
+- Builds your Docker image
+  - executes Grunt to create the build_timestamp.json file
+  - npm install
+  - Docker build
+  - Push to build image to your DockerHub account
+  - Tag and push to build image to your Azure Container Registry
+
+After your new image is pushed to ACR and/or DockerHub it is available for
+either automated or manual deployment to Azure services, such as Azure App Service
+or Azure Container Instance.
+
 # DevOps Pipeline Variables
 
-File **azure-pipelines.yml** defines the following variables inline; edit these
-per your DockerHub and Azure Container Registry accounts.
+File **azure-pipelines.yml** defines the Pipeline, and the following variables inline;
+edit these per your DockerHub and Azure Container Registry accounts.
+
+Specify your application and build **secrets** in Azure DevOps as Pipeline Variables
+rather than inline in your code (i.e. - the azure-pipelines.yml file).
+
+Pipelines -> Select -> Edit -> Edit in the Visual Designer -> Click Variables Tab
 
 Password variables **dockerPw** and **acrPw** are defined in the DevOps pipeline itself,
 rather that in the yaml file.
@@ -141,6 +171,8 @@ az container create \
     --ports 80 443
 ```
 
+---
+
 # Continuous Deployment to your Azure Linux App Service
 
 Configure your App Service container settings as follows:
@@ -149,6 +181,7 @@ Configure your App Service container settings as follows:
 
 ![settings](img/app-service-container-settings.png)
 
+---
 
 # Helper Bash Script
 
@@ -168,6 +201,8 @@ Usage:
   ./container.sh ci_restart <rg> <name>
   ./container.sh ci_restart cjoakim-aci cjoakim-aci1
 ```
+
+---
 
 # Bash Aliases
 
@@ -196,10 +231,3 @@ alias dkcps="docker-compose ps"
 # Show all docker aliases
 dkaliaslist() { alias | grep 'docker' | sed "s/^\([^=]*\)=\(.*\)/\1 => \2/"| sed "s/['|\']//g" | sort; }
 ```
-
-# Pipeline Variables
-
-Specify your application and build **secrets** in Azure DevOps as Pipeline Variables
-rather than inline in your code (i.e. - the azure-pipelines.yml file).
-
-Pipelines -> Select -> Edit -> Edit in the Visual Designer -> Click Variables Tab
