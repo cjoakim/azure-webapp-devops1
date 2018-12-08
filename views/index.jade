@@ -1,0 +1,14 @@
+extends layout
+block content
+  h1.azblue azure-webapp-devops1
+
+  h2.azblue Build User: #{build_user} &nbsp;&nbsp; Build Timestamp: #{build_timestamp}
+
+  table(border='0', width='100%', align='center')
+    tr
+      td
+        img(src='img/azure.png')
+
+  h2.azblue Current Date: #{current_date}
+  h2.azblue Start Date: #{start_date}
+  h2.azblue PID: #{pid} &nbsp;&nbsp; UUID: #{server_uuid}

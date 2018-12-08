@@ -1,0 +1,71 @@
+# DevOps Pipeline Build file
+# Chris Joakim, Microsoft, 2018/12/08
+#
+# See:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+# https://github.com/MicrosoftDocs/pipelines-javascript/blob/master/azure-pipelines.acr.yml
+
+pool:
+  vmImage: 'Ubuntu 16.04'
+
+variables:
+  dockerId:  'cjoakim'
+  acrName:   'cjoakimacr'
+  acrServer: 'cjoakimacr.azurecr.io'
+  acrUser:   'cjoakimacr'
+  buildTag:  'latest'
+  imageName: 'webapp-devops1:latest'
+  # dockerPw:  <- this is a pipeline variable
+  # acrPw:     <- this is a pipeline variable
+
+steps:
+- script: |
+    echo 'dockerId:  '$(dockerId)
+    echo 'dockerPw:  '$(dockerPw)
+    echo 'acrName:   '$(acrName)
+    echo 'acrServer: '$(acrServer)
+    echo 'acrUser:   '$(acrUser)
+    echo 'acrPw:     '$(acrPw)
+    echo 'buildTag:  '$(buildTag)
+    echo 'imageName: '$(imageName)
+    echo 'mySecret:  '$(mySecret)
+  displayName: 'display pipeline variables'
+
+- script: |
+    chmod 744 explore_build_env.sh ; ./explore_build_env.sh
+  displayName: 'explore VM with bash script'
+
+- script: |
+    echo ''
+    echo '=== NPM INSTALL' 
+    npm install
+
+    grunt
+    cat build_timestamp.json
+
+    echo ''
+    echo '=== BUILD DOCKER IMAGE' 
+    docker build -f Dockerfile -t $(dockerId)/$(imageName) .
+
+    echo ''
+    echo '=== LIST LOCAL IMAGES' 
+    docker images
+
+    echo ''
+    echo '=== TAG DOCKER IMAGE FOR ACR' 
+    docker tag $(dockerId)/$(imageName) $(acrName).azurecr.io/$(imageName)
+    docker images
+
+    echo ''
+    echo '=== PUSH IMAGE TO DOCKERHUB' 
+    docker login -u $(dockerId) -p $dockerPw
+    docker push $(dockerId)/$(imageName)
+
+    echo ''
+    echo '=== PUSH IMAGE TO ACR' 
+    docker login -u $(acrUser) -p $acrPw $(acrServer)
+    docker push $(acrName).azurecr.io/$(imageName)
+  env:
+    dockerPw: $(dockerPw)
+    acrPw: $(acrPw)
+  displayName: 'npm install and Docker build'
