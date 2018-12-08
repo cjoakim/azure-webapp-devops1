@@ -3,16 +3,14 @@
 # Bash script to build, run, list, and upload the Docker container.
 # Also can restart an Azure Container Instance with a newer image.
 # Chris Joakim, Microsoft, 2018/12/08
-#
-# CI: cjoakimacr.azurecr.io/webapp-devops1:latest
 
 export acr_name="cjoakimacr"
 export local_image_name="cjoakim/webapp-devops1:latest"
 export azure_acr_image_name="cjoakimacr.azurecr.io/webapp-devops1:latest"
 
-if [ $1 = "build" ]
+if [ $1 = "build_image" ]
 then
-    echo 'building '$local_image_name
+    echo 'building image: '$local_image_name
     grunt
     docker build -t $local_image_name .
 
@@ -52,7 +50,7 @@ then
     echo 'listing acr...'
     az acr repository list --name $AZURE_ACR_NAME --output table
 
-elif [ $1 = "delete_acr" ]
+elif [ $1 = "delete_acr_image" ]
 then
     echo 'deleting acr image: '$2
     az acr repository delete --name $AZURE_ACR_NAME --image $azure_acr_image_name
@@ -64,14 +62,15 @@ then
 
 else 
     echo 'Usage:'
-    echo '  ./container.sh build'
+    echo '  ./container.sh build_image'
     echo '  ./container.sh run_local'
     echo '  ./container.sh login_dockerhub'
     echo '  ./container.sh push_dockerhub'
     echo '  ./container.sh login_acr'
     echo '  ./container.sh push_acr'
     echo '  ./container.sh list_acr'
-    echo '  ./container.sh delete_acr webapp-devops1-devops'
+    echo '  ./container.sh delete_acr_image <image-name>'
+    echo '  ./container.sh delete_acr_image webapp-devops1-devops'
     echo '  ./container.sh ci_restart <rg> <name>'
     echo '  ./container.sh ci_restart cjoakim-aci cjoakim-aci1'
 fi

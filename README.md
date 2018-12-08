@@ -1,11 +1,76 @@
 # azure-webapp-devops1
 
-A containerized Node.js web app, built with Azure DevOps, deployed to Azure Linux App Service. 
-Also deployed to Azure Container Instance.
+A containerized Node.js web app, built with **Azure DevOps**, deployed to a Azure Linux App Service. 
+Also deployed to an Azure Container Instance.
 
-# See Deploy to Azure Container Instances from Azure Container Registry
+# Links
 
 See https://docs.microsoft.com/en-us/azure/container-instances/container-instances-using-azure-container-registry
+
+# Azure PaaS Services
+
+This project assumes that you already have the following:
+- git, Node.js, and Docker installed on your computer
+- An DockerHub account for your Docker images
+- An Azure Container Registry (ACR) for your Docker images
+- An Azure DevOps account
+
+We'll create the following PaaS services in this project with the Azure CLI:
+- An Azure KeyVault (AKV)
+- An Azure Container Instance (ACI) to run the web app container in
+
+Also create the following PaaS service in this project with the Azure Portal:
+- An Azure Linux App Service to run the ACR web app container in
+
+---
+
+# Project setup on your Workstation
+
+```
+$ git clone https://github.com/cjoakim/azure-webapp-devops1.git
+$ cd azure-webapp-devops1
+$ npm install
+$ grunt
+```
+
+## Workstation Environment Variables
+
+Set the following environment variables for your Azure Container Registry (ACR),
+Azure Key Vault (AKV), and DockerHub account.
+
+Example values shown below.
+```
+AZURE_ACR_NAME=cjoakimacr
+AZURE_ACR_USER_NAME=cjoakimacr
+AZURE_ACR_USER_PASS=<secret>
+AZURE_ACR_LOGIN_SERVER=cjoakimacr.azurecr.io
+
+AZURE_AKV_NAME=cjoakim-keyvault
+AZURE_AKV_RG=cjoakim-keyvault
+
+DOCKERHUB_USER_NAME=your-dockerhub-user-id
+DOCKERHUB_USER_PASS=your-dockerhub-user-password
+```
+
+# DevOps Pipeline Variables
+
+File **azure-pipelines.yml** defines the following variables inline; edit these
+per your DockerHub and Azure Container Registry accounts.
+
+Password variables **dockerPw** and **acrPw** are defined in the DevOps pipeline itself,
+rather that in the yaml file.
+
+```
+variables:
+  dockerId:  'cjoakim'
+  acrName:   'cjoakimacr'
+  acrServer: 'cjoakimacr.azurecr.io'
+  acrUser:   'cjoakimacr'
+  buildTag:  'latest'
+  imageName: 'webapp-devops1:latest'
+  # dockerPw:  <- this is a pipeline variable
+  # acrPw:     <- this is a pipeline variable
+```
 
 ---
 
@@ -13,11 +78,14 @@ See https://docs.microsoft.com/en-us/azure/container-instances/container-instanc
 
 ## Create the KeyVault
 
+An Azure KeyVault (AKV) is used to store secrets for interacting via automation with
+your Azure Container Registry.
+
 ```
 $ az keyvault create -g $AZURE_AKV_RG -n $AZURE_AKV_NAME
 ```
 
-## Create service principal and store credentials
+## Create a service principal and store credentials in AKV
 
 ```
 $ az keyvault secret set \
@@ -31,7 +99,7 @@ $ az keyvault secret set \
                 --output tsv)
 ```
 
-## Store service principal ID in AKV (the registry *username*)
+## Store service principal ID in AKV
 
 ```
 $ az keyvault secret set \
@@ -51,9 +119,11 @@ cjoakimacr-pull-usr
 cjoakimacr-pull-pwd
 ```
 
-# Deploy container with Azure CLI
+---
 
-See file **create_ci.sh** in this repo.
+# Deploy container to Azure Container Instance with Azure CLI
+
+See file **create_ci.sh** in this repo, which contains the following:
 
 ```
 instance_name="cjoakim-devops"
@@ -71,24 +141,65 @@ az container create \
     --ports 80 443
 ```
 
+# Continuous Deployment to your Azure Linux App Service
+
+Configure your App Service container settings as follows:
+- Specify your image in Azure Container Registry
+- set Continuous Deployment to 'On'
+
+![settings](img/app-service-container-settings.png)
+
+
+# Helper Bash Script
+
+See **container.sh**; it offers the following functions:
+
 ```
-curl "http://cjoakim-aci1-20491.eastus.azurecontainer.io/"
+Usage:
+  ./container.sh build_image
+  ./container.sh run_local
+  ./container.sh login_dockerhub
+  ./container.sh push_dockerhub
+  ./container.sh login_acr
+  ./container.sh push_acr
+  ./container.sh list_acr
+  ./container.sh delete_acr_image <image-name>
+  ./container.sh delete_acr_image webapp-devops1-devops
+  ./container.sh ci_restart <rg> <name>
+  ./container.sh ci_restart cjoakim-aci cjoakim-aci1
 ```
 
-# Restart container with Azure CLI
+# Bash Aliases
 
+I use these aliases, defined in ~/.bash_profile
 ```
-az container restart --resource-group cjoakim-aci --name cjoakim-aci1 
-```
+# docker:
+# see https://github.com/tcnksm/docker-alias/blob/master/zshrc
+dklbash() { docker exec -it $(docker ps -l -q) bash; } # bash into the latest container ID
+alias dkex="docker exec -it"         # Execute interactive container; dkex c9ce2ad6f242 bash
+alias dki="docker run -it -P"        # Run interactive container, e.g., $dki base /bin/bash
+alias dkimg="docker images"            # Get images
+alias dkip="docker inspect --format '{{ .NetworkSettings.IPAddress }}'" # Get container IP
+alias dklid="docker ps -l -q | pbcopy && pbpaste" # Get latest container ID
+alias dkps="docker ps"                 # Get process list
+alias dkpsa="docker ps -a"             # Get process list including stopped
+alias dkrm="docker rm $(docker ps -a -q)"           # Remove stopped containers
+alias dkrmall="docker rmi $(docker images -q)"      # Remove all images
+alias dkrmstopped="docker rm $(docker ps -a -q)"    # Remove stopped containers
+alias dkstop1="docker stop -t 1 $(docker ps -l -q)" # Stop the latest running container ID
+alias dkstopall="docker stop $(docker ps -a -q)"    # Stop all running containers
 
+# docker-compose:
+alias dkcup="docker-compose up"
+alias dkcps="docker-compose ps"
+
+# Show all docker aliases
+dkaliaslist() { alias | grep 'docker' | sed "s/^\([^=]*\)=\(.*\)/\1 => \2/"| sed "s/['|\']//g" | sort; }
+```
 
 # Pipeline Variables
 
+Specify your application and build **secrets** in Azure DevOps as Pipeline Variables
+rather than inline in your code (i.e. - the azure-pipelines.yml file).
+
 Pipelines -> Select -> Edit -> Edit in the Visual Designer -> Click Variables Tab
-
-Azure Container Instance
-http://cjoakim-devops-9706.eastus.azurecontainer.io
-
-Linux AppService with Containers
-https://cjoakim-webapp-devops1.azurewebsites.net/
-
