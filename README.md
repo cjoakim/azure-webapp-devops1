@@ -53,8 +53,10 @@ cjoakimacr-pull-pwd
 
 # Deploy container with Azure CLI
 
+See file **create_ci.sh** in this repo.
+
 ```
-instance_name="cjoakim-aci1"
+instance_name="cjoakim-devops"
 image_name="cjoakimacr.azurecr.io/webapp-devops1:latest"
 
 az container create \
@@ -85,9 +87,8 @@ az container restart --resource-group cjoakim-aci --name cjoakim-aci1
 Pipelines -> Select -> Edit -> Edit in the Visual Designer -> Click Variables Tab
 
 Azure Container Instance
-http://cjoakim-aci1-20491.eastus.azurecontainer.io/
+http://cjoakim-devops-9706.eastus.azurecontainer.io
 
 Linux AppService with Containers
-https://cjoakim-devops-web1.azurewebsites.net/
-
+https://cjoakim-webapp-devops1.azurewebsites.net/
 
