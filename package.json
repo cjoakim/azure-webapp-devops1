@@ -1,6 +1,6 @@
 {
   "name": "azure-webapp-docker-nodejs-simple",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "A super-simple containerized Node.js and Express web app for deployment to Azure",
   "author": "Chris Joakim",
@@ -8,18 +8,18 @@
   "keywords": [],
   "main": "app.js",
   "dependencies": {
-    "body-parser": "^1.13.3",
-    "cookie-parser": "^1.3.3",
-    "express": "^4.16.4",
+    "body-parser": "^1.19.0",
+    "cookie-parser": "^1.4.4",
+    "express": "^4.17.1",
     "jade": "^1.11.0",
     "morgan": "^1.9.1",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "grunt": "^1.0.1",
+    "grunt": "^1.0.4",
     "grunt-develop": "^0.4.0",
     "grunt-contrib-stylus": "^1.0.0",
-    "load-grunt-tasks": "^4.0.0"
+    "load-grunt-tasks": "^5.0.0"
   },
   "scripts": {
     "start": "node bin/www"
