@@ -35,6 +35,11 @@ $ npm install
 $ grunt
 ```
 
+```
+git remote add origin git@ssh.dev.azure.com:v3/chjoakim/azure-webapp-devops1/azure-webapp-devops1
+git push -u origin --all
+```
+
 ## Workstation Environment Variables
 
 Set the following environment variables for your Azure Container Registry (ACR),

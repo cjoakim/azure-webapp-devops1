@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Create an Azure Container Instance with the CLI.
-# Chris Joakim, Microsoft, 2018/12/08
+# Chris Joakim, Microsoft, 2019/07/13
 
-instance_name="cjoakim-devops"
+instance_name="cjoakim-webapp-devops1"
 image_name="cjoakimacr.azurecr.io/webapp-devops1:latest"
 
 az container create \
